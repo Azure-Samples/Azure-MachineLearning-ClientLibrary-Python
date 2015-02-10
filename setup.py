@@ -29,6 +29,7 @@ from setuptools import setup
 
 # To build:
 # python setup.py sdist
+# python setup.py bdist_wheel
 #
 # To install:
 # python setup.py install
@@ -38,10 +39,11 @@ from setuptools import setup
 #
 # To upload:
 # python setup.py sdist upload
+# python setup.py bdist_wheel upload
 
 setup(
     name='azureml',
-    version='0.1.0',
+    version='0.1.1',
     description='Microsoft Azure Machine Learning Python client library',
     license='MIT License',
     author='Microsoft Corporation',

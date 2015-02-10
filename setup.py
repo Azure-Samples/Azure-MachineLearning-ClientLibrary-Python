@@ -42,13 +42,13 @@ from setuptools import setup
 setup(
     name='azureml',
     version='0.1.0',
-    description='Microsoft Azure Machine Learning Data Access SDK',
+    description='Microsoft Azure Machine Learning Python client library',
     license='MIT License',
     author='Microsoft Corporation',
     author_email='ptvshelp@microsoft.com',
-    url='https://github.com/Azure/Azure-MachineLearning-DataAccess-Python',
+    url='https://github.com/Azure/Azure-MachineLearning-ClientLibrary-Python',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',

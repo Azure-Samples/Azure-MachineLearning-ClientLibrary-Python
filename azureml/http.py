@@ -35,6 +35,9 @@ from azureml.errors import (
     AzureMLHttpError,
 )
 
+__author__ = 'Microsoft Corp. <ptvshelp@microsoft.com>'
+__version__ = '0.1.0'
+
 
 class _RestClient(object):
     SERVICE_ROOT = 'api/'
@@ -48,6 +51,9 @@ class _RestClient(object):
     ACCESS_TOKEN_HEADER_NAME = 'x-ms-metaanalytics-authorizationtoken'
     CONTENT_TYPE_HEADER_NAME = 'Content-Type'
     CONTENT_TYPE_HEADER_VALUE_JSON = 'application/json;charset=UTF8'
+    DEFAULT_OWNER = 'Python SDK'
+    USER_AGENT_HEADER_NAME = 'User-Agent'
+    USER_AGENT_HEADER_VALUE = 'pyazureml/' + __version__
 
     def __init__(self, service_endpoint, access_token):
         self._service_endpoint = service_endpoint
@@ -120,10 +126,10 @@ class _RestClient(object):
         response = requests.get(url)
         return response.text
 
-    def upload_dataset(self, workspace_id, name, description, datatype_id,
+    def upload_dataset(self, workspace_id, name, description, data_type_id,
                        raw_data, family_id):
         # uploading data is a two step process. First we upload the raw data
-        api_path = self.UPLOAD_URI_FMI.format(workspace_id, datatype_id)
+        api_path = self.UPLOAD_URI_FMI.format(workspace_id, data_type_id)
         upload_result = self._send_post_req(api_path, raw_data)
 
         # now get the id that was generated
@@ -133,9 +139,10 @@ class _RestClient(object):
         metadata = {
             "DataSource": {
                 "Name": name,
-                "DataTypeId":datatype_id,
+                "DataTypeId":data_type_id,
                 "Description":description,
                 "FamilyId":family_id,
+                "Owner": self.DEFAULT_OWNER,
                 "SourceOrigin":"FromResourceUpload"
             },
             "UploadId": upload_id,
@@ -173,6 +180,7 @@ class _RestClient(object):
 
     def _get_headers(self, content_type=None):
         headers = {
+            self.USER_AGENT_HEADER_NAME: self.USER_AGENT_HEADER_VALUE,
             self.CONTENT_TYPE_HEADER_NAME: self.CONTENT_TYPE_HEADER_VALUE_JSON,
             self.SESSION_ID_HEADER_NAME: self.SESSION_ID_HEADER_VALUE,
             self.ACCESS_TOKEN_HEADER_NAME: self._access_token

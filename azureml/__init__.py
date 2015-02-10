@@ -27,11 +27,12 @@ from datetime import datetime
 
 import numbers
 import re
+import sys
 
 try:
-    from cStringIO import StringIO
+    from cStringIO import BytesIO
 except ImportError:
-    from io import StringIO
+    from io import BytesIO
 
 from azureml.errors import (
     AzureMLConflictHttpError,
@@ -41,7 +42,11 @@ from azureml.errors import (
     _not_none,
     _not_none_or_empty,
 )
-from azureml.http import _RestClient
+from azureml.http import (
+    _RestClient,
+    __author__,
+    __version__,
+)
 from azureml.serialization import (
     DataTypeIds,
     deserialize_dataframe,
@@ -49,9 +54,6 @@ from azureml.serialization import (
     is_supported,
 )
 
-
-__author__ = 'Microsoft Corp. <ptvshelp@microsoft.com>'
-__version__ = '0.1.0'
 
 _GLOBAL_WORKSPACE_ID = '506153734175476c4f62416c57734963'
 
@@ -89,6 +91,21 @@ class SourceDataset(Dataset):
         if is_supported(self.data_type_id):
             self.to_dataframe = self._to_dataframe
 
+        if not self.is_example:
+            self.update_from_raw_data = self._update_from_raw_data
+            self.update_from_dataframe = self._update_from_dataframe
+
+    @staticmethod
+    def _metadata_repr(metadata):
+        val = metadata['Name']
+        if sys.version_info < (3,):
+            return val.encode('ascii','ignore')
+        else:
+            return val
+
+    def __repr__(self):
+        return SourceDataset._metadata_repr(self._metadata)
+
     def open(self):
         '''Open and return a stream for the dataset contents.'''
         return self.workspace._rest.open_dataset_contents(self.contents_url)
@@ -106,7 +123,7 @@ class SourceDataset(Dataset):
         with self.open() as reader:
             return deserialize_dataframe(reader, self.data_type_id)
 
-    def update_from_dataframe(self, dataframe, data_type_id=None, name=None,
+    def _update_from_dataframe(self, dataframe, data_type_id=None, name=None,
                               description=None):
         """
         Serialize the specified DataFrame and replace the existing dataset.
@@ -142,7 +159,7 @@ class SourceDataset(Dataset):
             description = self.description
 
         try:
-            output = StringIO()
+            output = BytesIO()
             serialize_dataframe(output, data_type_id, dataframe)
             raw_data = output.getvalue()
         finally:
@@ -150,14 +167,14 @@ class SourceDataset(Dataset):
 
         self._upload_and_refresh(raw_data, data_type_id, name, description)
 
-    def update_from_raw_data(self, raw_data, data_type_id=None, name=None,
+    def _update_from_raw_data(self, raw_data, data_type_id=None, name=None,
                              description=None):
         """
         Upload already serialized raw data and replace the existing dataset.
 
         Parameters
         ----------
-        raw_data: str
+        raw_data: bytes
             Dataset contents to upload.
         data_type_id : str
             Serialization format of the raw data.
@@ -413,6 +430,9 @@ class Datasets(object):
         self.workspace = workspace
         self._example_filter = example_filter
 
+    def __repr__(self):
+        return '\n'.join((SourceDataset._metadata_repr(dataset) for dataset in self._get_datasets()))
+
     def __iter__(self):
         for dataset in self._get_datasets():
             yield self._create_dataset(dataset)
@@ -470,7 +490,7 @@ class Datasets(object):
         _not_none_or_empty('description', description)
 
         try:
-            output = StringIO()
+            output = BytesIO()
             serialize_dataframe(output, data_type_id, dataframe)
             raw_data = output.getvalue()
         finally:
@@ -484,7 +504,7 @@ class Datasets(object):
 
         Parameters
         ----------
-        raw_data: str
+        raw_data: bytes
             Dataset contents to upload.
         data_type_id : str
             Serialization format of the raw data.
@@ -602,8 +622,8 @@ class IntermediateDataset(Dataset):
     def _to_dataframe(self):
         """Read and return the dataset contents as a pandas DataFrame."""
         #TODO: figure out why passing in the opened stream directly gives invalid data
-        data = self.read_as_text()
-        reader = StringIO(data)
+        data = self.read_as_binary()
+        reader = BytesIO(data)
         return deserialize_dataframe(reader, self.data_type_id)
 
 
@@ -625,6 +645,17 @@ class Experiment(object):
 
         self.workspace = workspace
         self._metadata = metadata
+
+    @staticmethod
+    def _metadata_repr(metadata):
+        val = u'{0}\t{1}'.format(metadata['ExperimentId'], metadata['Description'])
+        if sys.version_info < (3,):
+            return val.encode('ascii','ignore')
+        else:
+            return val
+
+    def __repr__(self):
+        return Experiment._metadata_repr(self._metadata)
 
     class Status(object):
         def __init__(self, metadata):
@@ -741,6 +772,9 @@ class Experiments(object):
 
         self.workspace = workspace
         self._example_filter = example_filter
+
+    def __repr__(self):
+        return '\n'.join((Experiment._metadata_repr(experiment) for experiment in self._get_experiments()))
 
     def __iter__(self):
         for experiment in self._get_experiments():

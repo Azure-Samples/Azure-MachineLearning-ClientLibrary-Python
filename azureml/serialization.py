@@ -24,6 +24,7 @@
 #--------------------------------------------------------------------------
 
 from functools import partial
+import codecs
 import pandas as pd
 
 from azureml.errors import (
@@ -45,12 +46,19 @@ class DataTypeIds(object):
 
 def _dataframe_to_csv(writer, dataframe, delimiter, with_header):
     """serialize the dataframe with different delimiters"""
-    dataframe.to_csv(path_or_buf=writer, sep=delimiter, header=with_header, index=False)
+    encoding_writer = codecs.getwriter('utf-8')(writer)
+    dataframe.to_csv(
+        path_or_buf=encoding_writer,
+        sep=delimiter,
+        header=with_header,
+        index=False
+    )
 
 def _dataframe_to_txt(writer, dataframe):
+    encoding_writer = codecs.getwriter('utf-8')(writer)
     for row in dataframe.iterrows():
-        writer.write("".join(row[1].tolist()))
-        writer.write('\n')
+        encoding_writer.write("".join(row[1].tolist()))
+        encoding_writer.write('\n')
 
 def _dataframe_from_csv(reader, delimiter, with_header, skipspace):
     """Returns csv data as a pandas Dataframe object"""
@@ -58,11 +66,18 @@ def _dataframe_from_csv(reader, delimiter, with_header, skipspace):
     header = 0
     if not with_header:
         header = None
-    return pd.read_csv(reader, header=header, sep=sep, skipinitialspace=skipspace)
+
+    return pd.read_csv(
+        reader,
+        header=header,
+        sep=sep,
+        skipinitialspace=skipspace,
+        encoding='utf-8-sig'
+    )
 
 def _dataframe_from_txt(reader):
     """Returns PlainText data as a pandas Dataframe object"""
-    return pd.read_csv(reader, header=None, sep="\n")
+    return pd.read_csv(reader, header=None, sep="\n", encoding='utf-8-sig')
 
 
 _SERIALIZERS = {
@@ -89,28 +104,56 @@ _SERIALIZERS = {
 }
 
 
-def serialize_dataframe(writer, datatype_id, dataframe):
-    """Serialize a dataframe according to the data type."""
+def serialize_dataframe(writer, data_type_id, dataframe):
+    """
+    Serialize a dataframe.
+
+    Parameters
+    ----------
+    writer : file
+        File-like object to write to. Must be opened in binary mode.
+    data_type_id : dict
+        Serialization format to use.
+        See the azureml.DataTypeIds class for constants.
+    dataframe: pandas.DataFrame
+        Dataframe to serialize.
+    """
     _not_none('writer', writer)
-    _not_none_or_empty('datatype_id', datatype_id)
+    _not_none_or_empty('data_type_id', data_type_id)
     _not_none('dataframe', dataframe)
 
-    serializer = _SERIALIZERS.get(datatype_id)
+    serializer = _SERIALIZERS.get(data_type_id)
     if serializer is None:
-        raise UnsupportedDatasetTypeError(datatype_id)
+        raise UnsupportedDatasetTypeError(data_type_id)
     serializer[0](writer=writer, dataframe=dataframe)
 
-def deserialize_dataframe(reader, datatype_id):
-    """Deserialize a dataframe according to the data type."""
-    _not_none('reader', reader)
-    _not_none_or_empty('datatype_id', datatype_id)
+def deserialize_dataframe(reader, data_type_id):
+    """
+    Deserialize a dataframe.
 
-    serializer = _SERIALIZERS.get(datatype_id)
+    Parameters
+    ----------
+    reader : file
+        File-like object to read from. Must be opened in binary mode.
+    data_type_id : dict
+        Serialization format of the raw data.
+        See the azureml.DataTypeIds class for constants.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataframe object.
+    """
+    _not_none('reader', reader)
+    _not_none_or_empty('data_type_id', data_type_id)
+
+    serializer = _SERIALIZERS.get(data_type_id)
     if serializer is None:
-        raise UnsupportedDatasetTypeError(datatype_id)
+        raise UnsupportedDatasetTypeError(data_type_id)
     return serializer[1](reader=reader)
 
-def is_supported(datatype_id):
-    _not_none_or_empty('datatype_id', datatype_id)
+def is_supported(data_type_id):
+    """Return if a serializer is available for the specified format."""
+    _not_none_or_empty('data_type_id', data_type_id)
 
-    return _SERIALIZERS.get(datatype_id) is not None
+    return _SERIALIZERS.get(data_type_id) is not None

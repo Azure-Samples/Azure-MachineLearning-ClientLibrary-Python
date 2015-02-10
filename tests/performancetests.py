@@ -30,7 +30,7 @@ from pandas.util.testing import assert_frame_equal
 
 from azure.storage import BlobService
 from azureml import (
-    StringIO,
+    BytesIO,
     Workspace,
     DataTypeIds,
     serialize_dataframe,
@@ -57,25 +57,25 @@ class PerformanceTests(unittest.TestCase):
 
     def _write_blob_contents(self, filename, data):
         if settings.diagnostics.write_blob_contents:
-            with open('original-blob-' + filename, 'w') as data_file:
+            with open('original-blob-' + filename, 'wb') as data_file:
                 data_file.write(data)
 
     def _write_serialized_frame(self, filename, data):
         if settings.diagnostics.write_serialized_frame:
-            with open('serialized-frame-' + filename, 'w') as data_file:
+            with open('serialized-frame-' + filename, 'wb') as data_file:
                 data_file.write(data)
 
     def test_serialize_40mb_dataframe(self):
         # Arrange
         blob_name = settings.storage.medium_size_blob
-        original_data = self.blob.get_blob_to_text(settings.storage.container, blob_name)
-        original_dataframe = pd.read_csv(StringIO(original_data), header=0, sep=",")
+        original_data = self.blob.get_blob_to_bytes(settings.storage.container, blob_name)
+        original_dataframe = pd.read_csv(BytesIO(original_data), header=0, sep=",", encoding='utf-8-sig')
 
         self._write_blob_contents(blob_name, original_data)
 
         # Act
         start_time = datetime.now()
-        writer = StringIO()
+        writer = BytesIO()
         serialize_dataframe(writer, DataTypeIds.GenericCSV, original_dataframe)
         elapsed_time = datetime.now() - start_time
         result_data = writer.getvalue()
@@ -83,7 +83,7 @@ class PerformanceTests(unittest.TestCase):
         self._write_serialized_frame(blob_name, result_data)
 
         # Assert
-        result_dataframe = pd.read_csv(StringIO(result_data), header=0, sep=",")
+        result_dataframe = pd.read_csv(BytesIO(result_data), header=0, sep=",", encoding='utf-8-sig')
         assert_frame_equal(original_dataframe, result_dataframe)
         self.assertLess(elapsed_time.total_seconds(), 10)
 

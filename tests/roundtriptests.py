@@ -29,7 +29,7 @@ from pandas.util.testing import assert_frame_equal
 
 from azure.storage import BlobService
 from azureml import (
-    StringIO,
+    BytesIO,
     Workspace,
     DataTypeIds,
 )
@@ -56,12 +56,12 @@ class RoundTripTests(unittest.TestCase):
 
     def _write_blob_contents(self, filename, data):
         if settings.diagnostics.write_blob_contents:
-            with open('original-blob-' + filename, 'w') as data_file:
+            with open('original-blob-' + filename, 'wb') as data_file:
                 data_file.write(data)
 
     def _write_serialized_frame(self, filename, data):
         if settings.diagnostics.write_serialized_frame:
-            with open('serialized-frame-' + filename, 'w') as data_file:
+            with open('serialized-frame-' + filename, 'wb') as data_file:
                 data_file.write(data)
 
     def test_download_blob_then_upload_as_dataframe_then_read_dataset(self):
@@ -103,14 +103,15 @@ class RoundTripTests(unittest.TestCase):
             name, format, header = split_blob_name(blob_name)
 
             # Read the data from blob storage
-            original_data = self.blob.get_blob_to_text(settings.storage.container, blob_name)
+            original_data = self.blob.get_blob_to_bytes(settings.storage.container, blob_name)
             self._write_blob_contents(blob_name, original_data)
 
             # Parse the data to a dataframe using Pandas
             original_dataframe = pd.read_csv(
-                StringIO(original_data),
+                BytesIO(original_data),
                 header=0 if header == 'wh' else None,
-                sep=',' if format == 'csv' else '\t' if format == 'tsv' else '\n'
+                sep=',' if format == 'csv' else '\t' if format == 'tsv' else '\n',
+                encoding='utf-8-sig'
             )
 
             # Upload the dataframe as a new dataset
@@ -129,12 +130,41 @@ class RoundTripTests(unittest.TestCase):
             self.assertIsNotNone(dataset)
 
             # Read the dataset as a dataframe
-            result_data = dataset.read_as_text()
+            result_data = dataset.read_as_binary()
             self._write_serialized_frame(blob_name, result_data)
             result_dataframe = dataset.to_dataframe()
 
             # Verify that the dataframes are equal
             assert_frame_equal(original_dataframe, result_dataframe)
+
+    def test_azureml_example_datasets(self):
+        max_size = 10 * 1024 * 1024
+        skip = [
+            'Restaurant feature data',
+            'IMDB Movie Titles',
+            'Book Reviews from Amazon',
+        ]
+
+        for dataset in self.workspace.example_datasets:
+            if not hasattr(dataset, 'to_dataframe'):
+                print('skipped (unsupported format): {0}'.format(dataset.name))
+                continue
+
+            if dataset.size > max_size:
+                print('skipped (max size): {0}'.format(dataset.name))
+                continue
+
+            if dataset.name in skip:
+                print('skipped: {0}'.format(dataset.name))
+                continue
+
+            print('downloading: ' + dataset.name)
+            frame = dataset.to_dataframe()
+
+            print('uploading: ' + dataset.name)
+            dataset_name = 'unittest' + dataset.name + id_generator()
+            description = 'safe to be deleted - ' + dataset_name
+            self.workspace.datasets.add_from_dataframe(frame, dataset.data_type_id, dataset_name, description)
 
 
 if __name__ == '__main__':

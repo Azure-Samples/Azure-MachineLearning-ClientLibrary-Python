@@ -68,10 +68,6 @@ class TestSettings(object):
             return self.settings['mediumSizeBlob']
 
         @property
-        def unicode_bom_blob(self):
-            return self.settings['unicodeBomBlob']
-
-        @property
         def blobs(self):
             return self.settings['blobs']
 

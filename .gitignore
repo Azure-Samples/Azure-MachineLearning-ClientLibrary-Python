@@ -9,6 +9,11 @@ __pycache__/
 /bin/
 /obj/
 
+# Python setup.py output
+/azureml.egg-info/
+/dist/
+/build/
+
 # Test results
 /TestResults/
 

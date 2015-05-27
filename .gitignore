@@ -17,6 +17,9 @@ __pycache__/
 # Test results
 /TestResults/
 
+# Credentials 
+azuremltestsettings.json
+
 # User-specific files
 *.suo
 *.user

@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
 # All rights reserved.
 #
@@ -28,6 +28,13 @@ from datetime import datetime
 import numbers
 import re
 import sys
+try:
+        import ConfigParser
+except ImportError:
+        import configparser as ConfigParser
+
+import user
+from os import path
 
 try:
     from cStringIO import BytesIO
@@ -61,6 +68,7 @@ _GLOBAL_WORKSPACE_ID = '506153734175476c4f62416c57734963'
 class Endpoints(object):
     """Constants for the known REST API endpoints."""
     default = 'https://studio.azureml.net'
+    management_default = 'https://management.azureml.net'
 
 
 class Dataset(object):
@@ -806,8 +814,42 @@ class Experiments(object):
         return Experiment(self.workspace, metadata)
 
 
+_CONFIG_WORKSPACE_SECTION = 'workspace'
+_CONFIG_WORKSPACE_ID = 'id'
+_CONFIG_AUTHORIZATION_TOKEN = 'authorization_token'
+_CONFIG_API_ENDPOINT = 'api_endpoint'
+_CONFIG_MANAGEMENT_ENDPOINT = 'management_endpoint'
+
+def _get_workspace_info(workspace_id, authorization_token, endpoint, management_endpoint):
+    if workspace_id is None or authorization_token is None or endpoint is None or management_endpoint is None:
+        # read the settings from config
+        config = ConfigParser.ConfigParser()
+        config.read(path.join(user.home, '.azureml/settings.ini'))
+        
+        if config.has_section(_CONFIG_WORKSPACE_SECTION):
+            if workspace_id is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID):
+                workspace_id = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID)
+            if authorization_token is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN):
+                authorization_token = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN)
+            if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_ENDPOINT):
+                endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_ENDPOINT)
+            if management_endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT):
+                management_endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT)
+        
+        if workspace_id is None:
+            raise ValueError('workspace_id not provided and not available via config')
+        if authorization_token is None:
+            raise ValueError('authorization_token not provided and not available via config')
+        if endpoint is None:
+            endpoint = Endpoints.default
+        if management_endpoint is None:
+            management_endpoint = Endpoints.management_default
+
+    return workspace_id, authorization_token, endpoint, management_endpoint
+
 class Workspace(object):
-    def __init__(self, workspace_id, authorization_token, endpoint=Endpoints.default):
+
+    def __init__(self, workspace_id = None, authorization_token = None, endpoint=None):
         """
         Initialize a workspace.
 
@@ -822,10 +864,18 @@ class Workspace(object):
         endpoint: str
             URL of the endpoint to connect to. Specify this only if you host
             ML Studio on your own server(s).
+
+        Parameters that are omitted will be read from ~/.azureml/settings.ini:
+        [workspace]
+        id = abcd1234
+        authorization_token = abcd1234
+        endpoint = https://studio.azureml.net
         """
         _not_none_or_empty('workspace_id', workspace_id)
         _not_none_or_empty('authorization_token', authorization_token)
         _not_none_or_empty('endpoint', endpoint)
+
+        workspace_id, authorization_token, endpoint, _ = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
 
         self.workspace_id = workspace_id
         self.authorization_token = authorization_token

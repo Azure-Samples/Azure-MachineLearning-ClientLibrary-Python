@@ -33,7 +33,6 @@ try:
 except ImportError:
         import configparser as ConfigParser
 
-import user
 from os import path
 
 try:
@@ -824,7 +823,7 @@ def _get_workspace_info(workspace_id, authorization_token, endpoint, management_
     if workspace_id is None or authorization_token is None or endpoint is None or management_endpoint is None:
         # read the settings from config
         config = ConfigParser.ConfigParser()
-        config.read(path.join(user.home, '.azureml/settings.ini'))
+        config.read(path.expanduser('~/.azureml/settings.ini'))
         
         if config.has_section(_CONFIG_WORKSPACE_SECTION):
             if workspace_id is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID):

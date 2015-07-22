@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
 # All rights reserved.
 #
@@ -36,7 +36,7 @@ from azureml.errors import (
 )
 
 __author__ = 'Microsoft Corp. <ptvshelp@microsoft.com>'
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 
 class _RestClient(object):

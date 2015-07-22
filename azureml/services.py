@@ -258,7 +258,7 @@ def _deserialize_tuple(value):
 
 
 if numpy is not None:
-    # ndarray is serialized as (
+    # ndarray is serialized as (shape, datatype, data)
     @serializer(numpy.ndarray)
     def serialize_ndarray(inp, memo):
         return {
@@ -535,21 +535,21 @@ as attributes.
         self.help_url = help_url
         self.func = func
         self.service_id = service_id
-        
+
     def __repr__(self):
         return '<service {} at {}>'.format(self.func.__name__, self.url)
 
     def _invoke(self, call_args):
         body = {
             "Inputs": {
-                "input1": {
+                getattr(self.func, '__input_name__', 'input1'): {
                     "ColumnNames": _get_args(self.func),
                     "Values": call_args,
                 }
             },
             "GlobalParameters": {}
         }
-        
+
         resp = requests.post(
             self.url, 
             json=body, 
@@ -576,10 +576,11 @@ as attributes.
     def __call__(self, *args, **kwargs):
         # Call remote function
         r = self._invoke([ self._map_args(*args, **kwargs) ])
+        output_name = getattr(self.func, '__output_name__', 'output1')
         return _decode_response(
-            r["Results"]["output1"]["value"].get("ColumnNames"),
-            r["Results"]["output1"]["value"].get("ColumnTypes"),
-            r["Results"]["output1"]["value"]["Values"][0], 
+            r["Results"][output_name]["value"].get("ColumnNames"),
+            r["Results"][output_name]["value"].get("ColumnTypes"),
+            r["Results"][output_name]["value"]["Values"][0], 
             _get_annotation('return', self.func)
         )
 
@@ -591,9 +592,10 @@ equivalent to map(func, ...) but is executed with a single network call."""
         r = self._invoke(call_args)
 
         ret_type = _get_annotation('return', self.func)
+        output_name = getattr(self.func, '__output_name__', 'output1')
         return [_decode_response(
-                    r['Results']['output1']['value'].get("ColumnNames"), 
-                    r['Results']['output1']['value'].get("ColumnTypes"), 
+                    r['Results'][output_name]['value'].get("ColumnNames"), 
+                    r['Results'][output_name]['value'].get("ColumnTypes"), 
                     x, 
                     ret_type) 
                 for x in r['Results']['output1']['value']['Values']]
@@ -1022,3 +1024,19 @@ def myfunc(df):
         return func
 
     return l
+
+def input_name(name):
+    """specifies the name of the input the web service expects to receive.  Defaults to 'input1'"""
+    def l(func):
+        func.__input_name__ = name
+        return func
+
+    return l    
+
+def output_name(name):
+    """specifies the name of the input the web service expects to receive.  Defaults to 'input1'"""
+    def l(func):
+        func.__output_name__ = name
+        return func
+
+    return l    

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 
 #-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
@@ -43,7 +43,7 @@ from setuptools import setup
 
 setup(
     name='azureml',
-    version='0.1.1',
+    version='0.2.1',
     description='Microsoft Azure Machine Learning Python client library',
     license='MIT License',
     author='Microsoft Corporation',

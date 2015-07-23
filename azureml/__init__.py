@@ -870,11 +870,11 @@ class Workspace(object):
         authorization_token = abcd1234
         endpoint = https://studio.azureml.net
         """
+        workspace_id, authorization_token, endpoint, _ = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
+
         _not_none_or_empty('workspace_id', workspace_id)
         _not_none_or_empty('authorization_token', authorization_token)
         _not_none_or_empty('endpoint', endpoint)
-
-        workspace_id, authorization_token, endpoint, _ = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
 
         self.workspace_id = workspace_id
         self.authorization_token = authorization_token

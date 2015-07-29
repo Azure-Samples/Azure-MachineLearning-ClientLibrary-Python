@@ -286,9 +286,9 @@ This publishes a function which takes two floating point values and divides them
 
 my_func = publish(my_func, workspace, workspace_token, files_list)
 
-If a function has no source file associated with it (for example, you're developing inside of a REPL environment) then the functions byte code is serialized.  If the function refers to any global variables those will also be serialized using Pickle.
+If a function has no source file associated with it (for example, you're developing inside of a REPL environment) then the functions byte code is serialized.  If the function refers to any global variables those will also be serialized using Pickle.  In this mode all of the state which you're referring to needs to be already defined (e.g. your published function should come after any other functions you are calling).
 
-If a function is saved on disk then the entire module the function is defined in will be serialized and re-executed on the server to get the function back.
+If a function is saved on disk then the entire module the function is defined in will be serialized and re-executed on the server to get the function back.  In this mode the entire contents of the file is serialized and the order of the function definitions don't matter.
 
 After the function is published there will be a "service" property on the function.  This object has several properties of interest:
 

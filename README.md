@@ -361,6 +361,25 @@ will receive a single input in the form of a data frame, and should return
 a data frame object.  The schema of the data frame is specified with this 
 decorator.
 
+```python
+@publish(...)
+@dataframe_service(a = int, b = int)
+@returns(int)
+def myfunc(df):
+    return pandas.DataFrame([df['a'][i] + df['b'][i] for i in range(df.shape[0])])
+```
+
+This code can then be invoked either with:
+```python
+myfunc(1, 2)
+```
+
+or:
+
+```python
+myfunc.map([[1,2], [3,4]])
+```
+
 ### input_name
 Specifies the name of the input the web service expects to receive.  Defaults to 'input1'  Currently this is only
 supported on consumption.

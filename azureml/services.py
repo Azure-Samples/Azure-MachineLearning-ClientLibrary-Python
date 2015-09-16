@@ -871,7 +871,7 @@ def _publish_worker(func, files, workspace_id = None, workspace_token = None, ma
 
     url = endpoints['ApiLocation'] + '/execute?api-version=2.0'
     
-    return published(url, endpoints['PrimaryKey'], endpoints['HelpLocation'] + '/score', func, id)s
+    return published(url, endpoints['PrimaryKey'], endpoints['HelpLocation'] + '/score', func, id)
 
 def publish(func_or_workspace_id, workspace_id_or_token = None, workspace_token_or_none = None, files=(), endpoint=None):
     '''publishes a callable function or decorates a function to be published.  

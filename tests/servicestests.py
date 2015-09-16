@@ -25,9 +25,11 @@
 
 from azureml import services
 import time
+import tests
 import traceback
 import unittest
 import lib
+import uuid
 
 def invoke(published_func, *args, **kwargs):
     '''helper to repeatedly invoke the function until it becomes available...'''
@@ -52,6 +54,10 @@ def invoke_map(published_func, *args):
             print(e)
 
 class Test_services(unittest.TestCase):
+    def test_service_id(self):
+        service_id = uuid.UUID(lib.str_typed.service.service_id)
+        self.assertNotEqual(service_id, uuid.UUID('00000000000000000000000000000000'))
+
     def test_str_typed(self):
         self.assertEqual(invoke(lib.str_typed.service, 'abc', 'def'), 'abcdef')
 

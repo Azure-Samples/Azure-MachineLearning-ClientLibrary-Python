@@ -276,15 +276,19 @@ Publishing
 
 Python functions can either be published using the @publish decorator or by calling the publish method directly.  To publish a function using the decorator you can do:
 
+```python
 @services.publish(workspace, workspace_token)
 @services.types(a = float, b = float)
 @services.returns(float)
 def func(a, b):
     return a / b
+```
 
 This publishes a function which takes two floating point values and divides them.  Alternately you can publish a function by calling the publish method directly:
 
+```python
 my_func = publish(my_func, workspace, workspace_token, files_list)
+```
 
 If a function has no source file associated with it (for example, you're developing inside of a REPL environment) then the functions byte code is serialized.  If the function refers to any global variables those will also be serialized using Pickle.  In this mode all of the state which you're referring to needs to be already defined (e.g. your published function should come after any other functions you are calling).
 
@@ -313,10 +317,13 @@ list of files can be one of:
  
  The various formats for each filename can be freely mixed and matched.  Files can also be attached using the @attach decoator:
  
+ ```python
  @publish(...)
  @attach('file1.txt')
  def f(x):
      pass
+```
+
  And this supports the same file formats as the list.
  
  
@@ -325,11 +332,13 @@ Consumption
 
 Existing services can be consumed using the service decorator.  An empty function body is supplied and the resulting function becomes invokable and calls the published service:
 
+```python
 @services.service(url, api_key)
 @services.types(a = float, b = float)
 @services.returns(float)
 def func(a, b):
     pass
+```
 
 Controlling publishing / consumption
 ------------------------------------
@@ -339,8 +348,16 @@ There are several decorators which are used to control how the invocation occurs
 ### types(**kwargs)
 Specifies the types used for the arguments of a published or consumed service.  
 
+The type annotations are optional and are used for providing information which allows the service to interoperate with other languages.  The type information will be seen on the help page of the published service.  If the type information is not provided a Python specific format will be used and other languages may not be able to call the sevice.
+
+Supported types are: int, bool, float, or str.  
+
 ### returns(return_type)
 Specifies the return type for a published service.
+
+Like the parameter types this is also optional, and when omitted an internal Python format will be used and interoperability with other languages may be reduced.
+
+Supported types are: int, bool, float, or str.  
 
 ### service_id(id)
 Specifies the service ID for a service.  When publishing to the same service ID the service is updated instead of having a new service created.

@@ -830,8 +830,8 @@ def _get_workspace_info(workspace_id, authorization_token, endpoint, management_
                 workspace_id = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID)
             if authorization_token is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN):
                 authorization_token = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN)
-            if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_ENDPOINT):
-                endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_ENDPOINT)
+            if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT):
+                endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT)
             if management_endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT):
                 management_endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT)
         

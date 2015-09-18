@@ -43,7 +43,7 @@ from setuptools import setup
 
 setup(
     name='azureml',
-    version='0.2.3',
+    version='0.2.4',
     description='Microsoft Azure Machine Learning Python client library',
     license='MIT License',
     author='Microsoft Corporation',

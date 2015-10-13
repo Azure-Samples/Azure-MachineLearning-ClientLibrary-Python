@@ -28,6 +28,7 @@ from datetime import datetime
 import numbers
 import re
 import sys
+import json
 try:
         import ConfigParser
 except ImportError:
@@ -822,18 +823,29 @@ _CONFIG_MANAGEMENT_ENDPOINT = 'management_endpoint'
 def _get_workspace_info(workspace_id, authorization_token, endpoint, management_endpoint):
     if workspace_id is None or authorization_token is None or endpoint is None or management_endpoint is None:
         # read the settings from config
-        config = ConfigParser.ConfigParser()
-        config.read(path.expanduser('~/.azureml/settings.ini'))
-        
-        if config.has_section(_CONFIG_WORKSPACE_SECTION):
-            if workspace_id is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID):
-                workspace_id = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID)
-            if authorization_token is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN):
-                authorization_token = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN)
-            if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT):
-                endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT)
-            if management_endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT):
-                management_endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT)
+        jsonConfig = path.expanduser('~/.azureml/settings.json')
+        if path.exists(jsonConfig):
+            with open(jsonConfig) as cfgFile:
+                config = json.load(cfgFile)
+                if _CONFIG_WORKSPACE_SECTION in config:
+                    ws = config[_CONFIG_WORKSPACE_SECTION]
+                    workspace_id = ws.get(_CONFIG_WORKSPACE_ID, workspace_id)
+                    authorization_token = ws.get(_CONFIG_AUTHORIZATION_TOKEN, authorization_token)
+                    endpoint = ws.get(_CONFIG_API_ENDPOINT, endpoint)
+                    management_endpoint = ws.get(_CONFIG_MANAGEMENT_ENDPOINT, management_endpoint)
+        else:
+            config = ConfigParser.ConfigParser()
+            config.read(path.expanduser('~/.azureml/settings.ini'))
+            
+            if config.has_section(_CONFIG_WORKSPACE_SECTION):
+                if workspace_id is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID):
+                    workspace_id = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID)
+                if authorization_token is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN):
+                    authorization_token = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN)
+                if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT):
+                    endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT)
+                if management_endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT):
+                    management_endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT)
         
         if workspace_id is None:
             raise ValueError('workspace_id not provided and not available via config')

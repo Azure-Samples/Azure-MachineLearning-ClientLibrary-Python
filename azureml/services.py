@@ -311,7 +311,7 @@ def _encode(inp, memo = None):
     if memo is None:
         outer = True
         memo = {}
-    if id(inp) in memo:
+    if id(inp) in memo and type(inp) in [list, tuple, dict]:
         raise ValueError('circular reference detected')
     memo[id(inp)] = inp
 

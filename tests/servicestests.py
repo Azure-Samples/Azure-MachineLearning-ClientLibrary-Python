@@ -81,6 +81,10 @@ class Test_services(unittest.TestCase):
         # style 1, var args
         self.assertEqual(invoke(lib.mysum.service, 1, 2, 3), 6)
 
+    def test_interned_values(self):
+        # style 1, var args
+        self.assertEqual(invoke(lib.untyped_identity.service, [1, 1, None, None]), [1, 1, None, None])
+
     def test_kwargs(self):
         self.assertEqual(invoke(lib.kwargs.service, x = 1, y = 2), {'y': 2, 'x': 1})
 

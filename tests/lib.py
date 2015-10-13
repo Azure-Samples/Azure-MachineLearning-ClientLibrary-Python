@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
 # All rights reserved.
 #
@@ -50,6 +50,9 @@ except:
 def str_typed(a, b):
     return a + b
 
+@services.publish(TEST_WS, TEST_KEY, endpoint=ENDPOINT)
+def untyped_identity(a):
+    return a
 
 @services.publish(TEST_WS, TEST_KEY, endpoint=ENDPOINT)
 @services.attach((path.join(path.dirname(__file__), 'foo.txt'), 'foo.txt'))

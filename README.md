@@ -44,6 +44,36 @@ ws = Workspace(workspace_id='4c29e1adeba2e5a7cbeb0e4f4adfb4df',
                authorization_token='f4f3ade2c6aefdb1afb043cd8bcf3daf')
 ```
 
+If you're using AzureML in a region other than South Central US you'll also need to specify the endpoint:
+
+```python
+from azureml import Workspace
+
+ws = Workspace(workspace_id='4c29e1adeba2e5a7cbeb0e4f4adfb4df',
+               authorization_token='f4f3ade2c6aefdb1afb043cd8bcf3daf',
+               endpoint='https://europewest.studio.azureml.net/')
+```
+
+Specify workspace via config
+----------------------------
+If you don't want to store your access tokens in code you can also put them in a configuration file.  The SDK will look for ~/.azureml/settings.ini and if available use that:
+
+```
+[workspace]
+id=4c29e1adeba2e5a7cbeb0e4f4adfb4df
+authorization_token=f4f3ade2c6aefdb1afb043cd8bcf3daf
+api_endpoint=https://studio.azureml.net
+management_endpoint=https://management.azureml.net
+```
+
+And then the workspace can be created without arguments:
+
+```python
+from azureml import Workspace
+
+ws = Workspace()
+```
+
 
 Accessing datasets
 ------------------
@@ -287,7 +317,7 @@ def func(a, b):
 This publishes a function which takes two floating point values and divides them.  Alternately you can publish a function by calling the publish method directly:
 
 ```python
-my_func = publish(my_func, workspace, workspace_token, files_list)
+my_func = publish(my_func, workspace, workspace_token, files_list, endpoint=None)
 ```
 
 If a function has no source file associated with it (for example, you're developing inside of a REPL environment) then the functions byte code is serialized.  If the function refers to any global variables those will also be serialized using Pickle.  In this mode all of the state which you're referring to needs to be already defined (e.g. your published function should come after any other functions you are calling).
@@ -326,6 +356,7 @@ list of files can be one of:
 
  And this supports the same file formats as the list.
  
+If you are using AzureML from a different geography (for example West Europe or East Asia) you'll need to specify the endpoint that you need to connect to.  The end point is your region plus "management.azureml.net", for example: https://europewest.management.azureml.net
  
 Consumption
 -----------

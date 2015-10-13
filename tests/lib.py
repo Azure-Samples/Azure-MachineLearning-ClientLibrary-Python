@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
 # All rights reserved.
 #
@@ -27,17 +27,18 @@ from azureml import services
 import pandas
 from os import path
 import os
-import tests
-
-if hasattr(tests, 'load_test_settings'):
-    settings = tests.load_test_settings()
+try:
+    import tests
+    from tests.settings import load_test_settings
+    settings = load_test_settings()
     TEST_WS = settings.workspace.id
     TEST_KEY = settings.workspace.token
     ENDPOINT = settings.workspace.management_endpoint
-else:
+except:
     TEST_WS = ''
     TEST_KEY = ''
     ENDPOINT = ''
+
 
 #@services.publish(TEST_WS, TEST_KEY)
 #def noparams():
@@ -49,6 +50,9 @@ else:
 def str_typed(a, b):
     return a + b
 
+@services.publish(TEST_WS, TEST_KEY, endpoint=ENDPOINT)
+def untyped_identity(a):
+    return a
 
 @services.publish(TEST_WS, TEST_KEY, endpoint=ENDPOINT)
 @services.attach((path.join(path.dirname(__file__), 'foo.txt'), 'foo.txt'))

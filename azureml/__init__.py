@@ -28,6 +28,7 @@ from datetime import datetime
 import numbers
 import re
 import sys
+import json
 try:
         import ConfigParser
 except ImportError:
@@ -822,18 +823,29 @@ _CONFIG_MANAGEMENT_ENDPOINT = 'management_endpoint'
 def _get_workspace_info(workspace_id, authorization_token, endpoint, management_endpoint):
     if workspace_id is None or authorization_token is None or endpoint is None or management_endpoint is None:
         # read the settings from config
-        config = ConfigParser.ConfigParser()
-        config.read(path.expanduser('~/.azureml/settings.ini'))
-        
-        if config.has_section(_CONFIG_WORKSPACE_SECTION):
-            if workspace_id is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID):
-                workspace_id = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID)
-            if authorization_token is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN):
-                authorization_token = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN)
-            if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT):
-                endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT)
-            if management_endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT):
-                management_endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT)
+        jsonConfig = path.expanduser('~/.azureml/settings.json')
+        if path.exists(jsonConfig):
+            with open(jsonConfig) as cfgFile:
+                config = json.load(cfgFile)
+                if _CONFIG_WORKSPACE_SECTION in config:
+                    ws = config[_CONFIG_WORKSPACE_SECTION]
+                    workspace_id = ws.get(_CONFIG_WORKSPACE_ID, workspace_id)
+                    authorization_token = ws.get(_CONFIG_AUTHORIZATION_TOKEN, authorization_token)
+                    endpoint = ws.get(_CONFIG_API_ENDPOINT, endpoint)
+                    management_endpoint = ws.get(_CONFIG_MANAGEMENT_ENDPOINT, management_endpoint)
+        else:
+            config = ConfigParser.ConfigParser()
+            config.read(path.expanduser('~/.azureml/settings.ini'))
+            
+            if config.has_section(_CONFIG_WORKSPACE_SECTION):
+                if workspace_id is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID):
+                    workspace_id = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_WORKSPACE_ID)
+                if authorization_token is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN):
+                    authorization_token = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_AUTHORIZATION_TOKEN)
+                if endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT):
+                    endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_API_ENDPOINT)
+                if management_endpoint is None and config.has_option(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT):
+                    management_endpoint = config.get(_CONFIG_WORKSPACE_SECTION, _CONFIG_MANAGEMENT_ENDPOINT)
         
         if workspace_id is None:
             raise ValueError('workspace_id not provided and not available via config')
@@ -870,7 +882,7 @@ class Workspace(object):
         authorization_token = abcd1234
         endpoint = https://studio.azureml.net
         """
-        workspace_id, authorization_token, endpoint, _ = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
+        workspace_id, authorization_token, endpoint, management_endpoint = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
 
         _not_none_or_empty('workspace_id', workspace_id)
         _not_none_or_empty('authorization_token', authorization_token)
@@ -878,6 +890,8 @@ class Workspace(object):
 
         self.workspace_id = workspace_id
         self.authorization_token = authorization_token
+        self.api_endpoint = endpoint
+        self.management_endpoint = management_endpoint
         self._rest = _RestClient(endpoint, authorization_token)
         self.datasets = Datasets(workspace=self)
         self.user_datasets = Datasets(workspace=self, example_filter=False)

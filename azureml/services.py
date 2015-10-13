@@ -71,6 +71,7 @@ def attached():
 
 """
 from functools import update_wrapper
+import codecs
 import inspect
 import re
 import requests
@@ -310,7 +311,7 @@ def _encode(inp, memo = None):
     if memo is None:
         outer = True
         memo = {}
-    if id(inp) in memo:
+    if id(inp) in memo and type(inp) in [list, tuple, dict]:
         raise ValueError('circular reference detected')
     memo[id(inp)] = inp
 
@@ -615,67 +616,78 @@ def _get_dataframe_schema(function):
 
 def _get_main_source(function):
     
-    main_source = 'def azureml_main(df1 = None, df2 = None):' + chr(10)
-    main_source += '    results = []' + chr(10)
+    main_source = u'def azureml_main(df1 = None, df2 = None):\n'
+    main_source += u'    results = []\n' 
 
     if _get_dataframe_schema(function):
         # function just takes a dataframe...
-        main_source += '    results.append(__user_function(df1))' + chr(10)
+        main_source += u'    results.append(__user_function(df1))' + chr(10)
     else:
         # we're marshalling the arguments in.
-        main_source += '    for i in range(df1.shape[0]):' + chr(10)
+        main_source += u'    for i in range(df1.shape[0]):' + chr(10)
         for arg in _get_args(function):
             arg_type = _get_arg_type(arg, function)
             if pandas is not None and arg_type is pandas.DataFrame:
                 raise Exception('Only a single DataFrame argument is supported')
 
             if _get_arg_type(arg, function) == OBJECT_NAME:
-                main_source += '        ' + arg + ' = ' + '_decode(df1["' + arg + '"][i])' + chr(10)
+                main_source += '        ' + arg + u' = ' + u'_decode(df1["' + arg + u'"][i])' + chr(10)
             else:
-                main_source += '        ' + arg + ' = ' + 'df1["' + arg + '"][i]' + chr(10)
+                main_source += '        ' + arg + u' = ' + u'df1["' + arg + u'"][i]' + chr(10)
     
-        main_source += '        results.append(__user_function(' 
+        main_source += u'        results.append(__user_function(' 
     
         args = inspect.getargs(function.__code__)
         all_args = args.args
         if args.varargs is not None:
-            all_args.append('*' + args.varargs)
+            all_args.append(u'*' + args.varargs)
         if args.keywords is not None:
-            all_args.append('**' + args.keywords)
+            all_args.append(u'**' + args.keywords)
     
         # pass position arguments...
-        main_source += ', '.join(all_args)
-        main_source += '))' + chr(10)
+        main_source += u', '.join(all_args)
+        main_source += u'))' + chr(10)
     
     ret_annotation = _get_annotation('return', function)
     if _get_dataframe_schema(function):
         # function just returns a data frame directly
-        main_source += '    if len(results) == 1:' + chr(10)
-        main_source += '        return results[0]' + chr(10)
-        main_source += '    return pandas.DataFrame(results)' + chr(10)
+        main_source += u'    if len(results) == 1:' + chr(10)
+        main_source += u'        return results[0]' + chr(10)
+        main_source += u'    return pandas.DataFrame(results)' + chr(10)
     elif isinstance(ret_annotation, tuple):
         # multi-value return support...
         format = []
         arg_names = []
         for index, ret_type in enumerate(ret_annotation):
-            arg_names.append('r' + str(index))
+            arg_names.append(u'r' + str(index))
             t = _annotation_to_type(ret_type)
             if t == OBJECT_NAME:
-                format.append('_encode(r' + str(index) + ')')
+                format.append(u'_encode(r' + str(index) + u')')
             else:
-                format.append('r' + str(index))
-        main_source += '    return pandas.DataFrame([(' + ', '.join(format) + ') for ' + ', '.join(arg_names) + ' in results])' + chr(10)
+                format.append(u'r' + str(index))
+        main_source += u'    return pandas.DataFrame([(' + u', '.join(format) + u') for ' + ', '.join(arg_names) + u' in results])' + chr(10)
     elif _get_arg_type('return', function) == OBJECT_NAME:
-        main_source += '    return pandas.DataFrame([_encode(r) for r in results])' + chr(10)
+        main_source += u'    return pandas.DataFrame([_encode(r) for r in results])' + chr(10)
     else:
-        main_source += '    return pandas.DataFrame(results)' + chr(10)
+        main_source += u'    return pandas.DataFrame(results)' + chr(10)
     
     return main_source
 
 def _get_source(function):
     source_file = inspect.getsourcefile(function)
+    encoding = ''
     try:
-        source_text = ''.join(open(source_file).readlines())
+        with open(source_file, 'rb') as source_file:
+            line1 = source_file.readline()
+            line2 = source_file.readline()
+            if line1[:3] == '\xef\xbb\xbf':
+                encoding = 'utf-8-sig'
+            else:
+                match = re.search(b"coding[:=]\s*([-\w.]+)", line1) or re.search(b"coding[:=]\s*([-\w.]+)", line2)
+                if match:
+                    encoding = match.groups()[0]
+        with codecs.open(source_file, 'r', encoding) as source_file:
+            source_text = source_file.read()
     except:
         source_text = None
 
@@ -683,7 +695,11 @@ def _get_source(function):
     ourfile = __file__
     if ourfile.endswith('.pyc'):
         ourfile = ourfile[:-1]
-    source = u''.join(open(ourfile).readlines())
+    if encoding:
+        source = u'# coding=' + encoding.decode('ascii')
+    
+    with codecs.open(ourfile, 'r', 'ascii') as services_file:
+        source = services_file.read()
 
     main_source = _get_main_source(function)
 
@@ -694,10 +710,10 @@ def _get_source(function):
         #TODO: Remove base64 encoding when json double escape issue is fixed
         source += inspect.getsource(_deserialize_func)
         source += chr(10)
-        source += '__user_function = _deserialize_func(base64.decodestring(' + repr(base64.encodestring(_serialize_func(function)).replace(chr(10), '')) + '), globals())'
+        source += u'__user_function = _deserialize_func(base64.decodestring(' + repr(base64.encodestring(_serialize_func(function)).replace(chr(10), '')) + '), globals())'
     else:
         # we can upload the source code itself...
-        source += '''
+        source += u'''
 # overwrite publish/service with ones which won't re-publish...
 import sys
 sys.modules['azureml'] = azureml = type(sys)('azureml')
@@ -727,11 +743,12 @@ services.types = types
 services.returns = returns
 services.attach = attach
 services.dataframe_service = attach
+services.service_id = attach
 
 '''
         source += source_text
         source += chr(10)
-        source += '__user_function = ' + function.__name__
+        source += u'__user_function = ' + function.__name__
     
     return source
 
@@ -1015,7 +1032,6 @@ def dataframe_service(**args):
 
 @publish(...)
 @dataframe_service(a = int, b = int)
-@returns(int)
 def myfunc(df):
     return pandas.DataFrame([df['a'][i] + df['b'][i] for i in range(df.shape[0])])
 """

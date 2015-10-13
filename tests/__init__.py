@@ -47,6 +47,10 @@ class TestSettings(object):
         def endpoint(self):
             return self.settings['endpoint']
 
+        @property
+        def management_endpoint(self):
+            return self.settings['management_endpoint']
+
     class Storage(object):
         def __init__(self, settings):
             self.settings = settings

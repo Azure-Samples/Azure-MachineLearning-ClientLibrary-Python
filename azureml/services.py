@@ -687,7 +687,7 @@ def _get_source(function):
                 if match:
                     encoding = match.groups()[0]
         with codecs.open(source_file, 'r', encoding) as source_file:
-            source_text = u''.join(source_file.readlines())
+            source_text = source_file.read()
     except:
         source_text = None
 
@@ -699,7 +699,7 @@ def _get_source(function):
         source = u'# coding=' + encoding.decode('ascii')
     
     with codecs.open(ourfile, 'r', 'ascii') as services_file:
-        source = u''.join(services_file.readlines())
+        source = services_file.read()
 
     main_source = _get_main_source(function)
 

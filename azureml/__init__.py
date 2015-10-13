@@ -882,7 +882,7 @@ class Workspace(object):
         authorization_token = abcd1234
         endpoint = https://studio.azureml.net
         """
-        workspace_id, authorization_token, endpoint, _ = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
+        workspace_id, authorization_token, endpoint, management_endpoint = _get_workspace_info(workspace_id, authorization_token, endpoint, None)
 
         _not_none_or_empty('workspace_id', workspace_id)
         _not_none_or_empty('authorization_token', authorization_token)
@@ -890,6 +890,8 @@ class Workspace(object):
 
         self.workspace_id = workspace_id
         self.authorization_token = authorization_token
+        self.api_endpoint = endpoint
+        self.management_endpoint = management_endpoint
         self._rest = _RestClient(endpoint, authorization_token)
         self.datasets = Datasets(workspace=self)
         self.user_datasets = Datasets(workspace=self, example_filter=False)

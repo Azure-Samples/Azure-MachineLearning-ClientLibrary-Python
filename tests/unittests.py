@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
 # All rights reserved.
 #
@@ -26,8 +26,10 @@
 import math
 import sys
 import unittest
+import os
 import pandas as pd
 import numpy as np
+from os import path
 from pandas.util.testing import assert_frame_equal
 
 from azure.storage import BlobService
@@ -68,6 +70,54 @@ class WorkspaceTests(unittest.TestCase):
         )
 
         # Assert
+
+    def test_create_ini(self):
+        # Arrange
+        try:
+            with open(path.expanduser('~/.azureml/settings.ini'), 'w') as config:
+                config.write('''
+[workspace]
+id=test_id
+authorization_token=test_token
+api_endpoint=api_endpoint
+management_endpoint=management_endpoint
+''')
+
+            workspace = Workspace()
+            # Assert
+            self.assertEqual(workspace.workspace_id, 'test_id')
+            self.assertEqual(workspace.authorization_token, 'test_token')
+            self.assertEqual(workspace.api_endpoint, 'api_endpoint')
+            self.assertEqual(workspace.management_endpoint, 'management_endpoint')
+        finally:
+            if path.exists(path.expanduser('~/.azureml/settings.ini')):
+                os.unlink(path.expanduser('~/.azureml/settings.ini'))
+
+    def test_create_json(self):
+        # Arrange
+
+        # Act
+
+        try:
+            with open(path.expanduser('~/.azureml/settings.json'), 'w') as config:
+                config.write('''
+{"workspace":{
+  "id":"test_id",
+  "authorization_token": "test_token",
+  "api_endpoint":"api_endpoint",
+  "management_endpoint":"management_endpoint"
+}}''')
+
+            workspace = Workspace()
+            # Assert
+            self.assertEqual(workspace.workspace_id, 'test_id')
+            self.assertEqual(workspace.authorization_token, 'test_token')
+            self.assertEqual(workspace.api_endpoint, 'api_endpoint')
+            self.assertEqual(workspace.management_endpoint, 'management_endpoint')
+        finally:
+            if path.exists(path.expanduser('~/.azureml/settings.json')):
+                os.unlink(path.expanduser('~/.azureml/settings.json'))
+
 
     def test_create_no_workspace_id(self):
         # Arrange

@@ -27,17 +27,18 @@ from azureml import services
 import pandas
 from os import path
 import os
-import tests
-
-if hasattr(tests, 'load_test_settings'):
-    settings = tests.load_test_settings()
+try:
+    import tests
+    from tests.settings import load_test_settings
+    settings = load_test_settings()
     TEST_WS = settings.workspace.id
     TEST_KEY = settings.workspace.token
     ENDPOINT = settings.workspace.management_endpoint
-else:
+except:
     TEST_WS = ''
     TEST_KEY = ''
     ENDPOINT = ''
+
 
 #@services.publish(TEST_WS, TEST_KEY)
 #def noparams():

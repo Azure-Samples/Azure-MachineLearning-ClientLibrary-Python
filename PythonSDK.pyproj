@@ -43,10 +43,13 @@
     </Compile>
     <Compile Include="azureml\http.py" />
     <Compile Include="azureml\serialization.py" />
+    <Compile Include="azureml\services.py" />
     <Compile Include="azureml\__init__.py" />
     <Compile Include="setup.py" />
     <Compile Include="tests\roundtriptests.py" />
     <Compile Include="tests\performancetests.py" />
+    <Compile Include="tests\serialize_test.py" />
+    <Compile Include="tests\servicestests.py" />
     <Compile Include="tests\unittests.py">
       <SubType>Code</SubType>
     </Compile>

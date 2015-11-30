@@ -25,6 +25,7 @@
 
 import json
 import requests
+from azureml.errors import AzureMLConflictHttpError
 
 try:
     from urlparse import urljoin
@@ -150,7 +151,14 @@ class _RestClient(object):
             "ClientPoll": True
         }
 
-        api_path = self.DATASOURCES_URI_FMT.format(workspace_id)
+        try:
+            api_path = self.DATASOURCES_URI_FMT.format(workspace_id)
+        except AzureMLConflictHttpError as e:
+            raise AzureMLConflictHttpError(
+                'A data set named "{}" already exists'.format(name), 
+                e.status_code
+            )
+
         datasource_id = self._send_post_req(
             api_path, json.dumps(metadata), self.CONTENT_TYPE_HEADER_VALUE_JSON)
         return datasource_id

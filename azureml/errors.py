@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation
 # All rights reserved.
 #
@@ -45,14 +45,22 @@ class AzureMLHttpError(AzureMLError):
     def __new__(cls, message, status_code, *args, **kwargs):
         if status_code == 409:
             cls = AzureMLConflictHttpError
+        elif status_code == 401:
+            cls = AzureMLUnauthorizedError
         return AzureMLError.__new__(cls, message, status_code, *args, **kwargs)
+
+
+class AzureMLUnauthorizedError(AzureMLHttpError):
+    '''Unauthorized error from Azure ML REST API.'''
+    def __init__(self, message, status_code):
+        message = 'Unauthorized, please check your workspace ID and authorization token ({})'.format(message)
+        super(AzureMLUnauthorizedError, self).__init__(message, status_code)
 
 
 class AzureMLConflictHttpError(AzureMLHttpError):
     '''Conflict error from Azure ML REST API.'''
     def __init__(self, message, status_code):
         super(AzureMLConflictHttpError, self).__init__(message, status_code)
-
 
 class UnsupportedDatasetTypeError(AzureMLError):
     '''Dataset type is not supported.'''

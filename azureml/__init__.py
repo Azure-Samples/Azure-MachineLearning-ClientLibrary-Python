@@ -803,7 +803,7 @@ class Experiments(object):
                 if experiment['ExperimentId'] == index:
                     return self._create_experiment(experiment)
 
-        raise IndexError('An experiment named "{}" does not exist'.format(index))
+        raise IndexError('An experiment with the id "{}" does not exist'.format(index))
 
     def _get_experiments(self):
         experiments = self.workspace._rest.get_experiments(self.workspace.workspace_id)

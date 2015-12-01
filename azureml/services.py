@@ -871,14 +871,17 @@ def _publish_worker(func, files, workspace_id = None, workspace_token = None, ma
             f.write(json.dumps(body))
             f.close()
 
-    if _DEBUG:
         with open(func.__name__ + '.res', 'w') as f:
             f.write(str(resp.status_code) + chr(10))
             f.write(resp.text + chr(10))
             f.close()
 
     if resp.status_code < 200 or resp.status_code > 299:
-        raise ValueError('Failed to publish function ' + str(resp.status_code) + chr(10)  + 
+        try:
+            msg = resp.json()['error']['message']
+        except:
+            msg = str(resp.status_code)
+        raise ValueError('Failed to publish function: ' + msg + chr(10)  + 
                          'Set azureml.services._DEBUG = True to enable writing {}.req/{}.res files'.format(func.__name__, func.__name__))
 
     j = resp.json()

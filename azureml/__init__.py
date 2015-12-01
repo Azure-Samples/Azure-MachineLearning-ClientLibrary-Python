@@ -460,7 +460,7 @@ class Datasets(object):
                 if dataset['Name'] == index:
                     return self._create_dataset(dataset)
 
-        raise IndexError()
+        raise IndexError('A data set named "{}" does not exist'.format(index))
 
     def add_from_dataframe(self, dataframe, data_type_id, name, description):
         """
@@ -803,7 +803,7 @@ class Experiments(object):
                 if experiment['ExperimentId'] == index:
                     return self._create_experiment(experiment)
 
-        raise IndexError()
+        raise IndexError('An experiment with the id "{}" does not exist'.format(index))
 
     def _get_experiments(self):
         experiments = self.workspace._rest.get_experiments(self.workspace.workspace_id)

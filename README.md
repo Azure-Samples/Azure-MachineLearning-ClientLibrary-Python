@@ -381,14 +381,24 @@ Specifies the types used for the arguments of a published or consumed service.
 
 The type annotations are optional and are used for providing information which allows the service to interoperate with other languages.  The type information will be seen on the help page of the published service.  If the type information is not provided a Python specific format will be used and other languages may not be able to call the sevice.
 
-Supported types are: int, bool, float, or str.  
+Supported types are: int, bool, float, unicode.  
+
+When an unsupported type is specified the type will be serialized using an internal representation based upon Python's Pickle protocol.  This will prevent the web service from being used with other languages.
+
+When working with strings you need to use the unicode data type.  This is because the string data type used for interop is actually a Unicode string and Python's "str" objects are actually byte arrays.
+
+For 
 
 ### returns(return_type)
 Specifies the return type for a published service.
 
 Like the parameter types this is also optional, and when omitted an internal Python format will be used and interoperability with other languages may be reduced.
 
-Supported types are: int, bool, float, or str.  
+Supported types are: int, bool, float, unicode.  
+
+When an unsupported type is specified the type will be serialized using an internal representation based upon Python's Pickle protocol.  This will prevent the web service from being used with other languages.
+
+When working with strings you need to use the unicode data type.  This is because the string data type used for interop is actually a Unicode string and Python's "str" objects are actually byte arrays.
 
 ### service_id(id)
 Specifies the service ID for a service.  When publishing to the same service ID the service is updated instead of having a new service created.

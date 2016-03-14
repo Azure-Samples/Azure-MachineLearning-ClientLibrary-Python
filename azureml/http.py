@@ -37,7 +37,7 @@ from azureml.errors import (
 )
 
 __author__ = 'Microsoft Corp. <ptvshelp@microsoft.com>'
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 
 class _RestClient(object):

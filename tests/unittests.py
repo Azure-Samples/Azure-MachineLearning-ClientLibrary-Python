@@ -31,8 +31,8 @@ import pandas as pd
 import numpy as np
 from os import path
 from pandas.util.testing import assert_frame_equal
+import random
 
-from azure.storage import BlobService
 from azureml import (
     BytesIO,
     Workspace,
@@ -695,6 +695,29 @@ class UploadTests(unittest.TestCase):
         self.assertIsNotNone(self.workspace.datasets[self.original_name])
         self.assertEqual(result.name, self.original_name)
         self.assertEqual(result.description, self.original_description)
+
+    def test_add_from_raw_data_chunked(self):
+        original_name = 'unittestcsvwh' + id_generator()
+
+        # Arrange
+        original_raw_data = b''.join(chr(random.randint(0, 255)) for x in range(0x800000))
+
+        # Act
+        result = self.workspace.datasets.add_from_raw_data(
+            original_raw_data,
+            DataTypeIds.GenericCSV,
+            original_name,
+            'test description',
+        )
+
+        # Assert
+        self.assertIsNotNone(result)
+        self.assertIsNotNone(self.workspace.datasets[original_name])
+        self.assertEqual(result.name, original_name)
+
+        new_data = self.workspace.datasets[original_name].read_as_binary()
+        self.assertEqual(original_raw_data, new_data)
+
 
     def test_update_from_raw_data(self):
         # Arrange

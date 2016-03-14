@@ -37,7 +37,7 @@ from azureml.errors import (
 )
 
 __author__ = 'Microsoft Corp. <ptvshelp@microsoft.com>'
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 
 class _RestClient(object):
@@ -47,11 +47,13 @@ class _RestClient(object):
     DATASOURCES_URI_FMT = SERVICE_ROOT + 'workspaces/{0}/datasources'
     DATASOURCE_URI_FMT = SERVICE_ROOT + 'workspaces/{0}/datasources/{1}'
     UPLOAD_URI_FMI = SERVICE_ROOT + 'resourceuploads/workspaces/{0}/?userStorage=true&dataTypeId={1}'
+    UPLOAD_CHUNK_URI_FMT = SERVICE_ROOT + 'blobuploads/workspaces/{0}/?numberOfBlocks={1}&blockId={2}&uploadId={3}&dataTypeId={4}'
     SESSION_ID_HEADER_NAME = 'x-ms-client-session-id'
     SESSION_ID_HEADER_VALUE = 'DefaultSession'
     ACCESS_TOKEN_HEADER_NAME = 'x-ms-metaanalytics-authorizationtoken'
     CONTENT_TYPE_HEADER_NAME = 'Content-Type'
     CONTENT_TYPE_HEADER_VALUE_JSON = 'application/json;charset=UTF8'
+    CHUNK_SIZE = 0x200000 
     DEFAULT_OWNER = 'Python SDK'
     USER_AGENT_HEADER_NAME = 'User-Agent'
     USER_AGENT_HEADER_VALUE = 'pyazureml/' + __version__
@@ -131,10 +133,23 @@ class _RestClient(object):
                        raw_data, family_id):
         # uploading data is a two step process. First we upload the raw data
         api_path = self.UPLOAD_URI_FMI.format(workspace_id, data_type_id)
-        upload_result = self._send_post_req(api_path, raw_data)
+        upload_result = self._send_post_req(api_path, data=b'')
 
         # now get the id that was generated
         upload_id = upload_result["Id"]
+
+        # Upload the data in chunks...
+        total_chunks = int((len(raw_data) + (self.CHUNK_SIZE-1)) / self.CHUNK_SIZE)
+        for chunk in range(total_chunks):
+            chunk_url = self.UPLOAD_CHUNK_URI_FMT.format(
+                workspace_id,
+                total_chunks, # number of blocks
+                chunk, # block id
+                upload_id,
+                data_type_id,
+            )
+            chunk_data = raw_data[chunk*self.CHUNK_SIZE:(chunk + 1)*self.CHUNK_SIZE]
+            self._send_post_req(chunk_url, data=chunk_data)
 
         # use that to construct the DataSource metadata
         metadata = {

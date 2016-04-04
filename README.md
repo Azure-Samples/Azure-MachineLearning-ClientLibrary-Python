@@ -307,6 +307,8 @@ Publishing
 Python functions can either be published using the @publish decorator or by calling the publish method directly.  To publish a function using the decorator you can do:
 
 ```python
+from azureml import services
+
 @services.publish(workspace, workspace_token)
 @services.types(a = float, b = float)
 @services.returns(float)
@@ -364,6 +366,8 @@ Consumption
 Existing services can be consumed using the service decorator.  An empty function body is supplied and the resulting function becomes invokable and calls the published service:
 
 ```python
+from azureml import services
+
 @services.service(url, api_key)
 @services.types(a = float, b = float)
 @services.returns(float)

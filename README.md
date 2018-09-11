@@ -1,9 +1,9 @@
-Microsoft Azure Machine Learning Python client library
-======================================================
+Microsoft Azure Machine Learning Python client library for Azure ML Studio
+==========================================================================
 
-The preview of Azure Machine Learning Python client library lets you access your Azure ML datasets from your local Python environment.
+The preview of Azure Machine Learning Python client library lets you access your Azure ML Studio datasets from your local Python environment.
 
-You can download datasets that are available in your ML workspace, or intermediate datasets from experiments that were run. You can upload new datasets and update existing datasets. The data is optionally converted to/from a Pandas DataFrame.
+You can download datasets that are available in your ML Studio workspace, or intermediate datasets from experiments that were run. You can upload new datasets and update existing datasets. The data is optionally converted to/from a Pandas DataFrame.
 
 This is a technology preview. The APIs exposed by the library and the REST endpoints it connects to are subject to change.
 

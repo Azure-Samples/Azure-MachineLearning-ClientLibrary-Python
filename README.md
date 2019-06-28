@@ -1,6 +1,8 @@
 Microsoft Azure Machine Learning Python client library for Azure ML Studio
 ==========================================================================
 
+> **NOTE** This content is no longer maintained. Visit the [Azure Machine Learning Notebook](https://github.com/Azure/MachineLearningNotebooks) project for sample Jupyter notebooks for ML and deep learning with Azure Machine Learning using the Python SDK.
+
 The preview of Azure Machine Learning Python client library lets you access your Azure ML Studio datasets from your local Python environment.
 
 You can download datasets that are available in your ML Studio workspace, or intermediate datasets from experiments that were run. You can upload new datasets and update existing datasets. The data is optionally converted to/from a Pandas DataFrame.
